@@ -1,0 +1,21 @@
+application: dream-link
+version: 0
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+# Main handler for backend access
+- url: /app/.*
+  script: app.dreamlink.application
+
+# Static web resource handling
+- url: /
+  static_files: static/index.html
+  upload: static/index.html
+- url: /
+  static_dir: static
+
+libraries:
+- name: webapp2
+  version: latest

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Dream Link - Submit</title>
+    
+    <style>
+      input {
+        display: block;
+      }
+    </style>
+    
+  </head>
+
+  <body>
+    <h1>Submit a dream</h1>
+
+    <b>Create new user:</b>
+    <form action="/app/submit" method="POST">
+      <label for="dream_tags">Dream words (comma separated)</label>
+      <input type="text" name="dream_tags" />
+      <input type="submit" value="Submit" />
+    </form>
+    
+  </body>
+</html>
