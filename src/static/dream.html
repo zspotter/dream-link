@@ -1,34 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8"/>
-    <title>Dream Link</title>    
+	<meta charset="utf-8"/>
+	<title>Dream Link</title>	
+
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
   </head>
 
   <body>
-    <h1>Dream Link</h1>
+	<h1>Dream Link</h1>
 
-    <script>
+	<script>
 
-        var dream_id = window.location.pathname.split('/').pop();
+		var dream_id = window.location.pathname.split('/').pop();
 
-        var request = new XMLHttpRequest();
+		var request = new XMLHttpRequest();
 
-        request.onload = function () {
-            var status = request.status;
-            if (status != 200) {
-                document.write("Error: "+status);
-                return;
-            }
+		request.onload = function () {
+			var status = request.status;
+			if (status != 200) {
+				document.write("Error: "+status);
+				return;
+			}
 
-            var data = request.responseText;
-            document.write(data);
-        }
+			var data = request.responseText;
+			document.write(data);
+		}
 
-        request.open("POST", "/app/dream?link="+dream_id, true);
-        request.send();
+		request.open("POST", "/app/dream?link="+dream_id, true);
+		request.send();
 
-    </script>
-    
+	</script>
+	
   </body>
 </html>
