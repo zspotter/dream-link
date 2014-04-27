@@ -15,7 +15,7 @@ class SubmitDream( webapp2.RequestHandler ):
 		dream_id = 'newdreamid'
 
 		# Redirect user to the dream browser with their dream at focus
-		self.redirect('/dream.html?link=%s' % dream_id)
+		self.redirect('/dream/%s' % dream_id)
 
 
 """
@@ -36,7 +36,6 @@ class DreamGraph( webapp2.RequestHandler ):
 			{'other': ['fluffy', 'bear', 'teeth']},
 			{'another': ['teeth', 'unicorn', 'hellfire']},
 		]))
-
 
 
 application = webapp2.WSGIApplication([

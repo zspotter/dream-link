@@ -5,16 +5,31 @@ api_version: 1
 threadsafe: true
 
 handlers:
-# Main handler for backend access
-- url: /app/.*
-  script: app.dreamlink.application
 
 # Static web resource handling
 - url: /
   static_files: static/index.html
   upload: static/index.html
-- url: /
+
+- url: /dream(/.*)?
+  static_files: static/dream.html
+  upload: static/dream.html
+
+- url: /submit/?
+  static_files: static/submit.html
+  upload: static/submit.html
+
+- url: /static
   static_dir: static
+
+# Main handler for backend access
+- url: /app/.*
+  script: app.dreamlink.application
+
+# Catchall, 404
+- url: /.*
+  static_files: static/404.html
+  upload: static/404.html
 
 libraries:
 - name: webapp2
