@@ -8,6 +8,27 @@
   <body>
     <h1>Dream Link</h1>
 
+    <script>
+
+        var dream_id = window.location.pathname.split('/').pop();
+
+        var request = new XMLHttpRequest();
+
+        request.onload = function () {
+            var status = request.status;
+            if (status != 200) {
+                document.write("Error: "+status);
+                return;
+            }
+
+            var data = request.responseText;
+            document.write(data);
+        }
+
+        request.open("POST", "/app/dream?link="+dream_id, true);
+        request.send();
+
+    </script>
     
   </body>
 </html>
