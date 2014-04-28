@@ -10,7 +10,8 @@ class Dream( ndb.Model ):
 		words = []
 		for tag_key in self.tags:
 			words.append(tag_key.get().get_word())
-		return { self.key.urlsafe() : words }
+		return { 'key' : self.key.urlsafe(),
+		         'tags' : words }
 
 
 class Tag( ndb.Model ):

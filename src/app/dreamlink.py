@@ -49,9 +49,9 @@ class SubmitDream( webapp2.RequestHandler ):
 Responds with a json structure of dreams keys connected to the requested link
 """
 class DreamGraph( webapp2.RequestHandler ):
-	def post( self ):
-		dream_link = self.request.get('link')
-		dream_key = ndb.Key(urlsafe=dream_link)
+	def get( self ):
+		url_key = self.request.get('key')
+		dream_key = ndb.Key(urlsafe=url_key)
 
 		dream = dream_key.get()
 
