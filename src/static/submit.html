@@ -4,23 +4,56 @@
 		<meta charset="utf-8"/>
 		<title>Dream Link - Submit</title>
 
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.12/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="/static/res/tag-it.js" type="text/javascript" charset="utf-8"></script>
+
+		<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/flick/jquery-ui.css">
+		<link href="/static/res/jquery.tagit.css" rel="stylesheet" type="text/css">
+
 		<style>
-		input {
-		display: block;
-		}
+			a { text-decoration: none; }
+			a:link { color:#000000; }
+			a:visited { color:#000000; }
+			a:hover { text-decoration: underline;}
 		</style>
 
 	</head>
 
-	<body>
-		<h1>Submit a dream</h1>
+	<body><div style="width:60%; margin:12em auto; font-family:sans-serif;">
+		<h1>What did you dream?</h1>
 
-		<b>Log a new dream:</b>
-		<form action="/app/submit" method="POST" autocomplete="off">
-			<label for="dream_tags">Dream words (comma separated)</label>
-			<input type="text" name="dream_tags" />
-			<input type="submit" value="Submit" />
+		<p>Enter words that signify your dream.</p>
+		<form id="form" action="/app/submit" method="POST" autocomplete="off">
+			<input id="taginput" type="text" name="dream_tags" />
 		</form>
+		<p><a href="#" id="submit"><span style="font-weight:bold">Explore</span></a> 
+		<span id="wordwarning" style="display:none; padding-left:1em; font-style:italic">Enter 5-15 words</span></p>
 
-	</body>
+	</div></body>
+
+	<script>
+		$(document).ready(function() {
+	        $("#taginput").tagit({
+	        	caseSensitive: false,
+	        	tagLimit: 15
+	        });
+
+	        $("#form").submit(function(ev) {
+				ev.preventDefault();
+				var numTags = $("#taginput").tagit("assignedTags").length;
+				if ( numTags < 5 || numTags > 15 ) {
+					$("#wordwarning").hide();
+					$("#wordwarning").show(120);
+					return;
+				}
+				this.submit();
+			});
+
+			$("#submit").click(function() {
+				$("form").trigger("submit");
+			});
+	    });
+	</script>
+
 </html>
