@@ -1,21 +1,8 @@
 from google.appengine.ext import ndb
 
-# Forward declaration
-class Tag( ndb.Model ): pass
-
 class Dream( ndb.Model ):
-	tags = ndb.KeyProperty(kind=Tag, repeated=True)
+	tags = ndb.StringProperty(repeated=True)
 
 	def to_dict( self ):
-		words = []
-		for tag_key in self.tags:
-			words.append(tag_key.get().get_word())
 		return { 'key' : self.key.urlsafe(),
-		         'tags' : words }
-
-
-class Tag( ndb.Model ):
-	dreams = ndb.KeyProperty(kind=Dream, repeated=True)
-
-	def get_word( self ):
-		return self.key.id()
+		         'tags' : self.tags }

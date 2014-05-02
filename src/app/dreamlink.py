@@ -20,24 +20,10 @@ class SubmitDream( webapp2.RequestHandler ):
 			self.redirect('/submit')
 			return
 
-		# Create the dream and tags in the NDB
+		# Create the dream in the NDB
 		dream = Dream(parent=ndb.Key('Dream', 'root'))
+		dream.tags = dream_tags
 		dream.put()
-
-		tag_keys = []
-		for tag in dream_tags:
-			tm = Tag.get_or_insert(tag.lower(), parent=ndb.Key('Tag', 'root'))
-			if tm.dreams == None:
-				tm.dreams = []
-			tm.dreams.append(dream.key)
-			tm.put()
-			tag_keys.append(tm.key)
-
-		# Connect graph
-		dream.tags = tag_keys
-		dream.put()
-
-		# TODO optimize all previous put() calls
 
 		dream_link = dream.key.urlsafe()
 
@@ -53,23 +39,19 @@ class DreamGraph( webapp2.RequestHandler ):
 		url_key = self.request.get('key')
 		dream_key = ndb.Key(urlsafe=url_key)
 
-		dream = dream_key.get()
+		dream_src = dream_key.get()
 
 		# Check that dream_id refers to a valid dream
-		if not dream:
+		if not dream_src:
 			self.abort(400)
 			return
 
-		# Respond with a list of dreams and their words
-		link_keys = [dream_key]
-		dream_graph = [dream.to_dict()]
-		for tag_key in dream.tags:
-			for link_key in tag_key.get().dreams:
-				if not link_key in link_keys:
-					link_keys.append(link_key)
-					dream_graph.append(link_key.get().to_dict())
+		# Query for all dreams with any of the same words
+		dreams = Dream.query(Dream.tags.IN(dream_src.tags)).fetch(30)
+		for i in range(len(dreams)):
+			dreams[i] = dreams[i].to_dict()
 
-		self.response.write(json.dumps( dream_graph ))
+		self.response.write(json.dumps( dreams ))
 
 
 application = webapp2.WSGIApplication([
