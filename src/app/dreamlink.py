@@ -36,18 +36,29 @@ Responds with a json structure of dreams keys connected to the requested link
 """
 class DreamGraph( webapp2.RequestHandler ):
 	def get( self ):
-		url_key = self.request.get('key')
-		dream_key = ndb.Key(urlsafe=url_key)
+		dream_key = self.request.get('key', None)
+		dream_tag = self.request.get('tag', None)
 
-		dream_src = dream_key.get()
-
-		# Check that dream_id refers to a valid dream
-		if not dream_src:
+		# Check that dream or tag were provided
+		if not dream_key and not dream_tag:
 			self.abort(400)
 			return
 
-		# Query for all dreams with any of the same words
-		dreams = Dream.query(Dream.tags.IN(dream_src.tags)).fetch(30)
+		shared_tags = None
+		if dream_key:
+			try:
+				shared_tags = ndb.Key(urlsafe=dream_key).get().tags
+			except Exception, e:
+				# Catch bad urlsafe key. Unfortunately there is not a
+				# single defined error that will be thrown for this...
+				self.abort(400)
+				return
+
+		elif dream_tag:
+			shared_tags = [dream_tag]
+
+		# Query for up to 30 dreams with any of the same words
+		dreams = Dream.query(Dream.tags.IN(shared_tags)).fetch(30)
 		for i in range(len(dreams)):
 			dreams[i] = dreams[i].to_dict()
 
