@@ -34,12 +34,12 @@
 
 	<script>
 		$(document).ready(function() {
-	        $("#taginput").tagit({
-	        	caseSensitive: false,
-	        	tagLimit: 15
-	        });
+			$("#taginput").tagit({
+				caseSensitive: false,
+				tagLimit: 15
+			});
 
-	        $("#form").submit(function(ev) {
+			$("#form").submit(function(ev) {
 				ev.preventDefault();
 				var numTags = $("#taginput").tagit("assignedTags").length;
 				if ( numTags < 5 || numTags > 15 ) {
@@ -53,7 +53,7 @@
 			$("#submit").click(function() {
 				$("form").trigger("submit");
 			});
-	    });
+		});
 	</script>
 
 </html>
