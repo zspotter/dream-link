@@ -2,7 +2,16 @@
 <html lang="en">
   <head>
 	<meta charset="utf-8"/>
-	<title>Dream Link</title>	
+	<title>dream-link</title>	
+
+  <style>
+    a { text-decoration: none; color:#BABABA;}
+    a:link { color:#BABABA; }
+    a:visited { color:#BABABA; }
+    a:hover { }
+
+    body { font-family:sans-serif; }
+  </style>
 
 	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 
@@ -10,14 +19,14 @@
 
     .link {
       fill: none;
-      stroke: #666;
-      stroke-width: 1.5px;
+      stroke: #CCCCCC;
+      stroke-width: 2px;
     }
 
     .node circle {
       fill: #ccc;
       stroke: #fff;
-      stroke-width: 1.5px;
+      stroke-width: 2.5px;
     }
 
     text {
@@ -31,7 +40,9 @@
 
   <body>
     
-  <div id="svgcontainer" style="position:absolute; top:0; bottom:5px; width:100%; margin:0 auto;"></div>
+  <div id="svgcontainer" style="position:absolute; top:0; bottom:5px; width:100%; margin:0 auto;">
+    <div style="position:absolute; padding-left:1.5em;"><h1><a href="/">&laquo; dream-link</a></h1></div>
+  </div>
 	
   <script src="/static/res/dream.js" charset="utf-8"></script>
   </body>

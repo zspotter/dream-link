@@ -36,7 +36,10 @@ function tick() {
 function mouseover() {
 	d3.select(this).select("circle").transition()
 		.duration(150)
-		.attr("r", 12);
+		.attr("r", function(d) {
+			if (!expanded[d.id]) return 12;
+			else return (d.type == "tag")? 8 : 12;
+		});
 }
 
 function mouseout() {
@@ -49,7 +52,11 @@ function mouseout() {
 
 function click(d) {
 	if (d.type != "tag") return;
-	expand(d);
+	expand(d.type, d.id);
+	d3.select(this).select("circle")
+		.style("stroke", function(d) {
+			return (!expanded[d.id])? "#6A429E" : "#FFFFFF";
+		});
 }
 
 function updateNodes() {
@@ -72,7 +79,11 @@ function updateNodes() {
 			return (d.type == "key")? 12 : 8;
 		})
 		.style("fill", function(d) { 
-			return (d.type == "key")? "#c6dbef" : "#fd8d3c"; 
+			if (d.isRoot) return "#F2E738";
+			return (d.type == "key")? "#c6dbef" : "#B392DE"; 
+		})
+		.style("stroke", function(d) {
+			return (d.type != "key" && !expanded[d.id])? "#6A429E" : "#FFFFFF";
 		});
 	
 	entry.append("text")
@@ -87,11 +98,36 @@ function updateNodes() {
 	force.start();
 }
 
-function expand(d) {
-	if (d.expanded) return;
-	d.expanded = true;
-	d3.json("/app/dream?"+d.type+"="+d.id, function(json) {
+var expanded = {};
+
+function expand(ntype, nid, doCache) {
+	if (expanded[nid]) return;
+	expanded[nid] = true;
+
+	// Expand from cache
+	/*
+	if (dreamCache[nid]) {
+		var cdream = dreamCache[nid];
+		links.concat(cdream.links);
+		cdream.links.forEach(function(li) {
+			if (dreamCache[li.target.id]) {
+				nodes.push(dreamCache[li.target.id].node)
+				dreamCache[li.target.id] = null;
+			}
+		});
+		dreamCache[nid] = null;
+		updateNodes();
+		return;
+	}
+	*/
+
+	// Or query and expand
+	d3.json("/app/dream?"+ntype+"="+nid, function(json) {
 		console.log("JSON: ", json);
+		if (!json) {
+			expanded[nid] = false;
+			return;
+		}
 		// Link up each dream in json object
 		json.forEach(function(dream) {
 			// Check if dream is already in graph
@@ -102,7 +138,8 @@ function expand(d) {
 			if (dreamed) return;
 
 			// Create dream node and link it to existing nodes based on tags
-			var dreamNode = {id: dream.key, type: "key"};
+			var dreamNode = {id: dream.key, type: "key", isRoot: (dream.key == nid)};
+			expanded[dream.key] = true;
 			nodes.push(dreamNode);
 			dream.tags.forEach(function(tag) {
 				// Look for already existing tag node
@@ -115,17 +152,66 @@ function expand(d) {
 					return false;
 				});
 				if (tagNode === null) {
-					console.log("add tag "+tag);
 					tagNode = {id: tag, type: "tag"};
 					nodes.push(tagNode);
 				}
+				expanded[tag] = dreamNode.isRoot;
 				links.push({source: dreamNode, target: tagNode});
 			});
 		});
 		updateNodes();
+		//if (doCache) cacheNodes();
 	});
 }
 
+/*
+var dreamCache = {};
+
+function cacheNodes() {
+	var tags = [];
+	for (var nid in expanded) {
+		if (!expanded[nid]) tags.push(nid);
+	}
+
+	d3.json("/app/dream?tag="+tags.join(), function(json) {
+		console.log("cache JSON: ", json);
+		if (!json) return;
+
+		// Link up each dream in json object
+		json.forEach(function(dream) {
+			// Check if dream is already in graph
+			var dreamed = nodes.some(function(n) {
+				return n.id == dream.key;
+			});
+			// If dream already in graph, skip it
+			if (dreamed) return;
+
+			// Create dream node and link it to existing nodes based on tags
+			var dreamNode = {id: dream.key, type: "key", isRoot: false};
+			expanded[dream.key] = true;
+			dreamCache[dream.key] = {node: dreamNode, links:[]};
+			dream.tags.forEach(function(tag) {
+				// Look for already existing tag node
+				var tagNode = null;
+				nodes.some(function(n) {
+					if (n.id == tag) {
+						tagNode = n;
+						return true;
+					}
+					return false;
+				});
+				if (tagNode === null) {
+					tagNode = {id: tag, type: "tag"};
+					dreamCache[tag] = {node: tagNode, link:[]};
+				}
+				expanded[tag] = dreamNode.isRoot;
+				dreamCache[dream.key].links.push({source: dreamNode, target: tagNode});
+			});
+		});
+	});
+}
+*/
+
 var dream_id = window.location.pathname.split("/").pop();
-expand({type: "key", id: dream_id});
+expand("key", dream_id, true);
 

@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8"/>
-		<title>Dream Link - Submit</title>
+		<title>dream-link</title>
 
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.12/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
@@ -16,11 +16,17 @@
 			a:link { color:#000000; }
 			a:visited { color:#000000; }
 			a:hover { text-decoration: underline;}
+
+			body { font-family:sans-serif; }
+
+			.shown { visibility:hidden; }
+			.shower:hover .shown { visibility: visible; }
+
 		</style>
 
 	</head>
 
-	<body><div style="width:60%; margin:12em auto; font-family:sans-serif;">
+	<body><div style="width:60%; margin:12em auto;">
 		<h1>What did you dream?</h1>
 
 		<p>Enter words that signify your dream.</p>
@@ -29,6 +35,14 @@
 		</form>
 		<p><a href="#" id="submit"><span style="font-weight:bold">Explore</span></a> 
 		<span id="wordwarning" style="display:none; padding-left:1em; font-style:italic">Enter 5-15 words</span></p>
+
+		<div class="shower" style="display: inline-block; margin-top:15em; margin-bottom:2em; text-align:right; float:right;">?
+		<div class="shown">
+			<a href="http://www.brendabingham.com">Brenda Bingham</a><br>
+			<a href="http://zspotter.me">Zachary Potter</a><br>
+			<a href="https://github.com/zspotter/dream-link">source code</a>
+		</div>
+	</div>
 
 	</div></body>
 

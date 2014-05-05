@@ -37,10 +37,10 @@ Responds with a json structure of dreams keys connected to the requested link
 class DreamGraph( webapp2.RequestHandler ):
 	def get( self ):
 		dream_key = self.request.get('key', None)
-		dream_tag = self.request.get('tag', None)
+		dream_tags = self.request.get('tag', None)
 
 		# Check that dream or tag were provided
-		if not dream_key and not dream_tag:
+		if not dream_key and not dream_tags:
 			self.abort(400)
 			return
 
@@ -54,8 +54,8 @@ class DreamGraph( webapp2.RequestHandler ):
 				self.abort(400)
 				return
 
-		elif dream_tag:
-			shared_tags = [dream_tag]
+		elif dream_tags:
+			shared_tags = dream_tags.split(',')
 
 		# Query for up to 30 dreams with any of the same words
 		dreams = Dream.query(Dream.tags.IN(shared_tags)).fetch(30)
