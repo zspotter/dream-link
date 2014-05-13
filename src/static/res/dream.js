@@ -37,7 +37,7 @@ function mouseover() {
 	d3.select(this).select("circle").transition()
 		.duration(150)
 		.attr("r", function(d) {
-			if (!expanded[d.id]) return 12;
+			if (isExpandable(d.id)) return 12;
 			else return (d.type == "tag")? 8 : 12;
 		});
 }
@@ -52,10 +52,10 @@ function mouseout() {
 
 function click(d) {
 	if (d.type != "tag") return;
-	expand(d.type, d.id);
+	expandNode(d.id);
 	d3.select(this).select("circle")
 		.style("stroke", function(d) {
-			return (!expanded[d.id])? "#6A429E" : "#FFFFFF";
+			return (isExpandable(d.id))? "#6A429E" : "#FFFFFF";
 		});
 }
 
@@ -83,7 +83,7 @@ function updateNodes() {
 			return (d.type == "key")? "#c6dbef" : "#B392DE"; 
 		})
 		.style("stroke", function(d) {
-			return (d.type != "key" && !expanded[d.id])? "#6A429E" : "#FFFFFF";
+			return (d.type != "key" && isExpandable(d.id))? "#6A429E" : "#FFFFFF";
 		});
 	
 	entry.append("text")
@@ -98,120 +98,127 @@ function updateNodes() {
 	force.start();
 }
 
-var expanded = {};
+function isExpandable(id) {
+	// only expandable if valid id, is already in graph, isnt expanded yet, and has link targets not yet in graph
+	var n = dreamCache[id];
+	if (!n || !n.ingraph || n.expanded) return false;
 
-function expand(ntype, nid, doCache) {
-	if (expanded[nid]) return;
-	expanded[nid] = true;
-
-	// Expand from cache
-	/*
-	if (dreamCache[nid]) {
-		var cdream = dreamCache[nid];
-		links.concat(cdream.links);
-		cdream.links.forEach(function(li) {
-			if (dreamCache[li.target.id]) {
-				nodes.push(dreamCache[li.target.id].node)
-				dreamCache[li.target.id] = null;
-			}
-		});
-		dreamCache[nid] = null;
-		updateNodes();
-		return;
-	}
-	*/
-
-	// Or query and expand
-	d3.json("/app/dream?"+ntype+"="+nid, function(json) {
-		console.log("JSON: ", json);
-		if (!json) {
-			expanded[nid] = false;
-			return;
-		}
-		// Link up each dream in json object
-		json.forEach(function(dream) {
-			// Check if dream is already in graph
-			var dreamed = nodes.some(function(n) {
-				return n.id == dream.key;
-			});
-			// If dream already in graph, skip it
-			if (dreamed) return;
-
-			// Create dream node and link it to existing nodes based on tags
-			var dreamNode = {id: dream.key, type: "key", isRoot: (dream.key == nid)};
-			expanded[dream.key] = true;
-			nodes.push(dreamNode);
-			dream.tags.forEach(function(tag) {
-				// Look for already existing tag node
-				var tagNode = null;
-				nodes.some(function(n) {
-					if (n.id == tag) {
-						tagNode = n;
-						return true;
-					}
-					return false;
-				});
-				if (tagNode === null) {
-					tagNode = {id: tag, type: "tag"};
-					nodes.push(tagNode);
-				}
-				expanded[tag] = dreamNode.isRoot;
-				links.push({source: dreamNode, target: tagNode});
-			});
-		});
-		updateNodes();
-		//if (doCache) cacheNodes();
+	// return true if any link targets not in graph
+	return n.links.some(function(lnk) {
+		//console.log("__", n.node.id, "link", lnk.target.id, "ingraph", dreamCache[lnk.target.id].ingraph);
+		return !dreamCache[lnk.target.id].ingraph;
 	});
 }
 
-/*
-var dreamCache = {};
+function updateRings() {
+	// Update ring colors
+	console.log("update rings");
+	d3.selectAll("circle")
+		.style("stroke", function(d) {
+			return (d.type != "key" && isExpandable(d.id))? "#6A429E" : "#FFFFFF";
+		});
+}
 
-function cacheNodes() {
-	var tags = [];
-	for (var nid in expanded) {
-		if (!expanded[nid]) tags.push(nid);
-	}
+// contains id's mapped to {expanded, ingraph, node, links} where node is a node and link is a list of id's
+var dreamCache = {}; 
 
-	d3.json("/app/dream?tag="+tags.join(), function(json) {
-		console.log("cache JSON: ", json);
-		if (!json) return;
+function expandNode(nid, noupdate) {
+	if (!isExpandable(nid)) {
+		console.log("not expandable", nid);
+		return;
+	};
+
+	var cdream = dreamCache[nid];
+	cdream.expanded = true;
+
+	console.log("expanding cdream", cdream.node.id);
+
+	// Expand from cache
+	var cacheTags = [];
+	var newKeys = [];
+	cdream.links.forEach(function(lnk) {
+		// Dont push link if the link or its reverse link is already in list
+		var nolink = true;
+		links.some(function(prelnk) {
+			if ((prelnk.source == lnk.source && prelnk.target == lnk.target) 
+				|| (prelnk.source == lnk.target && prelnk.target == lnk.source)) {
+				nolink = false;
+				return true;
+			}
+			return false;
+		});
+		if (nolink) { 
+			console.log(" pushing link", lnk.source.id, "->", lnk.target.id);
+			links.push(lnk);
+		}
+		if (!dreamCache[lnk.target.id].ingraph) {
+			console.log(" pushing", lnk.target.type, "node", lnk.target.id);
+			nodes.push(lnk.target);
+			if (lnk.target.type === "key") newKeys.push(lnk.target);
+			dreamCache[lnk.target.id].ingraph = true;
+			
+			// Node added to graph, so cache its own connections
+			if (lnk.target.type === "tag") {
+				cacheTags.push(lnk.target.id);
+			}
+		}
+	});
+	// Start next cache
+	if (cacheTags.length > 0) cacheNodes(cacheTags, "tag", updateRings);
+	// if any key nodes where expanded, expand those before updating
+	newKeys.forEach(function(knode) {
+		console.log("double extend", knode.id);
+		expandNode(knode.id, true);
+	});
+	// Update recently expanded
+	if (!noupdate) updateNodes();
+}
+
+function cacheNodes(nids, ntype, callback) {
+	ntype = ntype || "tag";
+	if (typeof nids === "string") nids = [nids];
+
+	d3.json("/app/dream?"+ntype+"="+nids.join(), function(json) {
+		console.log("cache request ", nids, " yields ", json);
+		if (!json) {
+			if (callback) callback();
+			return;
+		}
 
 		// Link up each dream in json object
 		json.forEach(function(dream) {
-			// Check if dream is already in graph
-			var dreamed = nodes.some(function(n) {
-				return n.id == dream.key;
-			});
-			// If dream already in graph, skip it
-			if (dreamed) return;
+			// If dream already in cache, skip it
+			if (dreamCache[dream.key]) return;
 
 			// Create dream node and link it to existing nodes based on tags
-			var dreamNode = {id: dream.key, type: "key", isRoot: false};
-			expanded[dream.key] = true;
-			dreamCache[dream.key] = {node: dreamNode, links:[]};
+			var dreamNode = {id: dream.key, type: "key", isRoot: (dream.key === root_id)};
+			dreamCache[dream.key] = {expanded: false, ingraph: false, node: dreamNode, links:[]};
 			dream.tags.forEach(function(tag) {
 				// Look for already existing tag node
-				var tagNode = null;
-				nodes.some(function(n) {
-					if (n.id == tag) {
-						tagNode = n;
-						return true;
-					}
-					return false;
-				});
-				if (tagNode === null) {
-					tagNode = {id: tag, type: "tag"};
-					dreamCache[tag] = {node: tagNode, link:[]};
+				var tagNode = dreamCache[tag]? dreamCache[tag].node : {id: tag, type: "tag"};
+				if (!dreamCache[tag]) {
+					dreamCache[tag] = {expanded: false, ingraph: false, node: tagNode, links:[]};
 				}
-				expanded[tag] = dreamNode.isRoot;
+				dreamCache[tag].links.push({source: tagNode, target: dreamNode});
 				dreamCache[dream.key].links.push({source: dreamNode, target: tagNode});
 			});
 		});
+		if (callback) callback();
 	});
 }
-*/
 
-var dream_id = window.location.pathname.split("/").pop();
-expand("key", dream_id, true);
+var root_id = window.location.pathname.split("/").pop();
+cacheNodes(root_id, "key", function() {
+	if (!dreamCache[root_id]) {
+		// Root dream not found!
+		window.alert("Dream could not be loaded!");
+		return;
+	}
+	// add root to graph, then expand it
+	nodes.push(dreamCache[root_id].node);
+	dreamCache[root_id].ingraph = true;
+	console.log("added root node", dreamCache);
+	// expand root
+	expandNode(root_id);
+});
 
